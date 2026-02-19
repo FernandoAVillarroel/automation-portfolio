@@ -1,0 +1,81 @@
+{
+  "name": "Telegram to Google Sheets + Gemini AI",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": ["message"]
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "name": "Telegram Trigger",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "YOUR_GOOGLE_SHEET_ID",
+        "sheetName": "Sheet1",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Fecha": "={{ $now }}",
+            "Nombre": "={{ $json.message.from.first_name }}",
+            "Mensaje": "={{ $json.message.text }}"
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [250, 0],
+      "name": "Append Row in Google Sheets",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "modelId": "models/gemini-2.5-flash",
+        "messages": {
+          "values": [
+            {
+              "role": "user",
+              "content": "={{ $json.message.text }}"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [500, 0],
+      "name": "Process with Gemini AI",
+      "credentials": {}
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Append Row in Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Row in Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Process with Gemini AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
